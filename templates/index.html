@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Link Prediction in Social Networks</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #222;
+        }
+
+        .header {
+            background: #ffffff;
+            border-bottom: 3px solid #2563eb;
+            padding: 22px 40px;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #1e3a8a;
+            font-size: 28px;
+        }
+
+        .header p {
+            margin: 7px 0 0;
+            color: #64748b;
+        }
+
+        .container {
+            width: 94%;
+            max-width: 1250px;
+            margin: 25px auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: #1e3a8a;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(210px, 1fr));
+
+            gap: 18px;
+            align-items: end;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 7px;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 7px;
+            background: #2563eb;
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .reset {
+            background: #64748b;
+        }
+
+        .reset:hover {
+            background: #475569;
+        }
+
+        .algorithm-info {
+            background: #eff6ff;
+            padding: 15px;
+            border-left: 4px solid #2563eb;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(180px, 1fr));
+
+            gap: 15px;
+        }
+
+        .stat {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 18px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 26px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .stat-title {
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        .graph-container {
+            overflow-x: auto;
+            text-align: center;
+        }
+
+        svg {
+            width: 100%;
+            max-width: 850px;
+            height: 430px;
+            background: #fafafa;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+        }
+
+        .edge {
+            stroke: #94a3b8;
+            stroke-width: 2;
+        }
+
+        .predicted-edge {
+            stroke: #16a34a;
+            stroke-width: 3;
+            stroke-dasharray: 8,6;
+        }
+
+        .node {
+            fill: #2563eb;
+            stroke: white;
+            stroke-width: 3;
+        }
+
+        .selected-node {
+            fill: #f59e0b;
+        }
+
+        .node-label {
+            font-size: 12px;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            fill: white;
+        }
+
+        .results {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .results th,
+        .results td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+
+        .results th {
+            background: #eff6ff;
+            color: #1e3a8a;
+        }
+
+        .score {
+            font-weight: bold;
+            color: #16a34a;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 20px;
+            background: #dcfce7;
+            color: #166534;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 25px;
+            color: #64748b;
+        }
+
+        .workflow {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step {
+            padding: 12px 18px;
+            background: #eff6ff;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #1e3a8a;
+        }
+
+        .arrow {
+            font-size: 22px;
+            color: #64748b;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+        }
+
+        @media(max-width: 600px) {
+
+            .header {
+                padding: 18px;
+            }
+
+            .container {
+                width: 95%;
+            }
+
+            svg {
+                height: 350px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="header">
+
+    <h1>🔗 Link Prediction in Social Networks</h1>
+
+    <p>
+        Predicting potential future connections using
+        graph-based algorithms
+    </p>
+
+</div>
+
+
+<div class="container">
+
+
+    <!-- Overview -->
+
+    <div class="card">
+
+        <h2>Project Overview</h2>
+
+        <p>
+            This project predicts possible future connections
+            between users in a social network.
+            It uses graph-based link prediction algorithms
+            to calculate similarity between users.
+        </p>
+
+    </div>
+
+
+    <!-- Prediction -->
+
+    <div class="card">
+
+        <h2>Prediction Panel</h2>
+
+        <form action="/predict" method="POST">
+
+            <div class="controls">
+
+                <div>
+
+                    <label>Select User</label>
+
+                    <select name="user">
+
+                        {% for user in users %}
+
+                        <option value="{{ user }}"
+                            {% if user == selected_user %}
+                            selected
+                            {% endif %}>
+
+                            {{ user }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div>
+
+                    <label>Select Algorithm</label>
+
+                    <select name="algorithm">
+
+                        <option value="Common Neighbors"
+                            {% if algorithm == "Common Neighbors" %}
+                            selected
+                            {% endif %}>
+
+                            Common Neighbors
+
+                        </option>
+
+                        <option value="Jaccard Similarity"
+                            {% if algorithm == "Jaccard Similarity" %}
+                            selected
+                            {% endif %}>
+
+                            Jaccard Similarity
+
+                        </option>
+
+                        <option value="Adamic-Adar"
+                            {% if algorithm == "Adamic-Adar" %}
+                            selected
+                            {% endif %}>
+
+                            Adamic-Adar
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div>
+
+                    <label>Recommendations</label>
+
+                    <input
+                        type="number"
+                        name="recommendations"
+                        min="1"
+                        max="10"
+                        value="{{ recommendation_count }}"
+                    >
+
+                </div>
+
+
+                <div>
+
+                    <button type="submit">
+                        🔍 Predict Connections
+                    </button>
+
+                </div>
+
+
+                <div>
+
+                    <button
+                        type="button"
+                        class="reset"
+                        onclick="window.location.href='/'">
+
+                        ↻ Reset
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+
+        <div class="algorithm-info">
+
+            {% if algorithm == "Common Neighbors" %}
+
+            <b>Common Neighbors:</b>
+            Counts the number of common friends between
+            two users.
+
+            {% elif algorithm == "Jaccard Similarity" %}
+
+            <b>Jaccard Similarity:</b>
+            Measures similarity using the ratio of common
+            friends to total unique friends.
+
+            {% else %}
+
+            <b>Adamic-Adar:</b>
+            Gives more importance to uncommon shared
+            connections.
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- Statistics -->
+
+    <div class="card">
+
+        <h2>Network Statistics</h2>
+
+        <div class="stats">
+
+            <div class="stat">
+
+                <div class="stat-number">
+                    {{ users|length }}
+                </div>
+
+                <div class="stat-title">
+                    Total Users
+                </div>
+
+            </div>
+
+
+            <div class="stat">
+
+                <div class="stat-number">
+                    {{ edges|length }}
+                </div>
+
+                <div class="stat-title">
+                    Connections
+                </div>
+
+            </div>
+
+
+            <div class="stat">
+
+                <div class="stat-number">
+                    {{ (users|length * (users|length - 1) / 2)|int }}
+                </div>
+
+                <div class="stat-title">
+                    Possible Links
+                </div>
+
+            </div>
+
+
+            <div class="stat">
+
+                <div class="stat-number"
+                     style="font-size:18px;">
+
+                    {{ algorithm }}
+
+                </div>
+
+                <div class="stat-title">
+                    Algorithm
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Graph -->
+
+    <div class="card">
+
+        <h2>Social Network Graph</h2>
+
+        <div class="graph-container">
+
+            <svg viewBox="0 0 800 430">
+
+                <!-- Original Connections -->
+
+                {% for edge in edges %}
+
+                    {% set p1 = positions[edge[0]] %}
+                    {% set p2 = positions[edge[1]] %}
+
+                    <line
+                        x1="{{ p1[0] }}"
+                        y1="{{ p1[1] }}"
+                        x2="{{ p2[0] }}"
+                        y2="{{ p2[1] }}"
+                        class="edge">
+                    </line>
+
+                {% endfor %}
+
+
+                <!-- Predicted Connections -->
+
+                {% if predicted %}
+
+                    {% for prediction in predictions %}
+
+                        {% set p1 = positions[selected_user] %}
+                        {% set p2 = positions[prediction.user] %}
+
+                        {% if prediction.score > 0 %}
+
+                        <line
+                            x1="{{ p1[0] }}"
+                            y1="{{ p1[1] }}"
+                            x2="{{ p2[0] }}"
+                            y2="{{ p2[1] }}"
+                            class="predicted-edge">
+                        </line>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                {% endif %}
+
+
+                <!-- Nodes -->
+
+                {% for user in users %}
+
+                    {% set p = positions[user] %}
+
+                    <circle
+                        cx="{{ p[0] }}"
+                        cy="{{ p[1] }}"
+                        r="25"
+                        class="node
+                        {% if user == selected_user and predicted %}
+                        selected-node
+                        {% endif %}">
+                    </circle>
+
+                    <text
+                        x="{{ p[0] }}"
+                        y="{{ p[1] }}"
+                        class="node-label">
+
+                        {{ user[:1] }}
+
+                    </text>
+
+                    <text
+                        x="{{ p[0] }}"
+                        y="{{ p[1] + 42 }}"
+                        text-anchor="middle"
+                        font-size="12"
+                        font-weight="bold">
+
+                        {{ user }}
+
+                    </text>
+
+                {% endfor %}
+
+            </svg>
+
+        </div>
+
+        <p style="text-align:center;">
+
+            <span class="badge">
+                Blue = Existing User
+            </span>
+
+            {% if predicted %}
+
+            <span class="badge">
+                Green Dashed = Predicted Connection
+            </span>
+
+            {% endif %}
+
+        </p>
+
+    </div>
+
+
+    <!-- Results -->
+
+    <div class="card">
+
+        <h2>Prediction Results</h2>
+
+        {% if predicted %}
+
+            {% if predictions %}
+
+            <table class="results">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Rank</th>
+                        <th>Recommended User</th>
+                        <th>Score</th>
+                        <th>Common Neighbors</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                {% for prediction in predictions %}
+
+                    <tr>
+
+                        <td>
+                            {{ loop.index }}
+                        </td>
+
+                        <td>
+                            <b>{{ prediction.user }}</b>
+                        </td>
+
+                        <td class="score">
+
+                            {% if algorithm == "Common Neighbors" %}
+
+                                {{ "%.0f"|format(prediction.score) }}
+
+                            {% else %}
+
+                                {{ "%.4f"|format(prediction.score) }}
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {% if prediction.common %}
+
+                                {{ prediction.common|join(", ") }}
+
+                            {% else %}
+
+                                None
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+            {% else %}
+
+                <div class="empty">
+
+                    No possible connections found.
+
+                </div>
+
+            {% endif %}
+
+        {% else %}
+
+            <div class="empty">
+
+                Select a user and algorithm, then click
+                <b>Predict Connections</b>.
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- Algorithm Information -->
+
+    <div class="card">
+
+        <h2>Algorithms Used</h2>
+
+        <p>
+            <b>1. Common Neighbors:</b>
+            Counts common friends between two users.
+        </p>
+
+        <p>
+            <b>2. Jaccard Similarity:</b>
+            Calculates the ratio of common neighbors
+            to the union of their neighbors.
+        </p>
+
+        <p>
+            <b>3. Adamic-Adar:</b>
+            Gives higher importance to shared neighbors
+            with lower network degree.
+        </p>
+
+    </div>
+
+
+    <!-- Workflow -->
+
+    <div class="card">
+
+        <h2>Implementation Workflow</h2>
+
+        <div class="workflow">
+
+            <div class="step">Social Network</div>
+
+            <div class="arrow">→</div>
+
+            <div class="step">Select User</div>
+
+            <div class="arrow">→</div>
+
+            <div class="step">Choose Algorithm</div>
+
+            <div class="arrow">→</div>
+
+            <div class="step">Calculate Score</div>
+
+            <div class="arrow">→</div>
+
+            <div class="step">Rank Users</div>
+
+            <div class="arrow">→</div>
+
+            <div class="step">Prediction</div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Viva -->
+
+    <div class="card">
+
+        <h2>Viva Explanation</h2>
+
+        <p>
+            <b>What is Link Prediction?</b><br>
+
+            Link prediction is a graph-based technique used
+            to predict possible future relationships between
+            currently unconnected users.
+        </p>
+
+        <p>
+            <b>Why is it useful?</b><br>
+
+            It can be used for friend recommendations,
+            social network analysis and recommendation systems.
+        </p>
+
+        <p>
+            <b>What does this project do?</b><br>
+
+            The project calculates similarity scores between
+            users and recommends users who may form future
+            connections.
+        </p>
+
+    </div>
+
+
+</div>
+
+
+<div class="footer">
+
+    Link Prediction in Social Networks |
+    Flask Web Application
+
+</div>
+
+
+</body>
+
+</html>
