@@ -1,20 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Link Prediction in Social Networks</title>
 
     <style>
-
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -24,7 +16,7 @@
         }
 
         .header {
-            background: #ffffff;
+            background: #fff;
             border-bottom: 3px solid #2563eb;
             padding: 22px 40px;
         }
@@ -47,7 +39,7 @@
         }
 
         .card {
-            background: white;
+            background: #fff;
             border-radius: 12px;
             padding: 22px;
             margin-bottom: 20px;
@@ -61,9 +53,7 @@
 
         .controls {
             display: grid;
-            grid-template-columns:
-                repeat(auto-fit, minmax(210px, 1fr));
-
+            grid-template-columns: repeat(5, 1fr);
             gap: 18px;
             align-items: end;
         }
@@ -74,13 +64,13 @@
             margin-bottom: 7px;
         }
 
-        select,
-        input {
+        select, input {
             width: 100%;
             padding: 11px;
             border: 1px solid #cbd5e1;
             border-radius: 7px;
             font-size: 15px;
+            background: #fff;
         }
 
         button {
@@ -89,23 +79,16 @@
             border: none;
             border-radius: 7px;
             background: #2563eb;
-            color: white;
+            color: #fff;
             font-size: 15px;
             font-weight: bold;
             cursor: pointer;
         }
 
-        button:hover {
-            background: #1d4ed8;
-        }
+        button:hover { background: #1d4ed8; }
 
-        .reset {
-            background: #64748b;
-        }
-
-        .reset:hover {
-            background: #475569;
-        }
+        .reset { background: #64748b; }
+        .reset:hover { background: #475569; }
 
         .algorithm-info {
             background: #eff6ff;
@@ -117,9 +100,7 @@
 
         .stats {
             display: grid;
-            grid-template-columns:
-                repeat(auto-fit, minmax(180px, 1fr));
-
+            grid-template-columns: repeat(4, 1fr);
             gap: 15px;
         }
 
@@ -169,20 +150,18 @@
 
         .node {
             fill: #2563eb;
-            stroke: white;
+            stroke: #fff;
             stroke-width: 3;
         }
 
-        .selected-node {
-            fill: #f59e0b;
-        }
+        .selected-node { fill: #f59e0b; }
 
         .node-label {
             font-size: 12px;
             font-weight: bold;
             text-anchor: middle;
             dominant-baseline: middle;
-            fill: white;
+            fill: #fff;
         }
 
         .results {
@@ -251,136 +230,68 @@
             color: #64748b;
         }
 
-        @media(max-width: 600px) {
-
-            .header {
-                padding: 18px;
-            }
-
-            .container {
-                width: 95%;
-            }
-
-            svg {
-                height: 350px;
-            }
-
+        @media (max-width: 950px) {
+            .controls { grid-template-columns: repeat(2, 1fr); }
+            .stats { grid-template-columns: repeat(2, 1fr); }
         }
 
+        @media (max-width: 600px) {
+            .header { padding: 18px; }
+            .container { width: 95%; }
+            .controls { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: 1fr; }
+            svg { height: 350px; }
+        }
     </style>
-
 </head>
-
 
 <body>
 
 <div class="header">
-
-    <h1>🔗 Link Prediction in Social Networks</h1>
-
-    <p>
-        Predicting potential future connections using
-        graph-based algorithms
-    </p>
-
+    <h1>Link Prediction in Social Networks</h1>
+    <p>Predicting potential future connections using K-Nearest Neighbors (KNN)</p>
 </div>
-
 
 <div class="container">
 
-
-    <!-- Overview -->
-
     <div class="card">
-
         <h2>Project Overview</h2>
-
         <p>
-            This project predicts possible future connections
-            between users in a social network.
-            It uses graph-based link prediction algorithms
-            to calculate similarity between users.
+            This project predicts possible future connections between users
+            in a social network using the K-Nearest Neighbors (KNN)
+            machine learning algorithm with graph-based features.
         </p>
-
     </div>
 
-
-    <!-- Prediction -->
-
     <div class="card">
-
         <h2>Prediction Panel</h2>
 
         <form action="/predict" method="POST">
-
             <div class="controls">
 
                 <div>
-
                     <label>Select User</label>
-
                     <select name="user">
-
                         {% for user in users %}
-
                         <option value="{{ user }}"
-                            {% if user == selected_user %}
-                            selected
-                            {% endif %}>
-
+                            {% if user == selected_user %}selected{% endif %}>
                             {{ user }}
-
                         </option>
-
                         {% endfor %}
-
                     </select>
-
                 </div>
 
-
                 <div>
-
-                    <label>Select Algorithm</label>
-
+                    <label>Algorithm</label>
                     <select name="algorithm">
-
-                        <option value="Common Neighbors"
-                            {% if algorithm == "Common Neighbors" %}
-                            selected
-                            {% endif %}>
-
-                            Common Neighbors
-
+                        <option value="KNN" selected>
+                            K-Nearest Neighbors (KNN)
                         </option>
-
-                        <option value="Jaccard Similarity"
-                            {% if algorithm == "Jaccard Similarity" %}
-                            selected
-                            {% endif %}>
-
-                            Jaccard Similarity
-
-                        </option>
-
-                        <option value="Adamic-Adar"
-                            {% if algorithm == "Adamic-Adar" %}
-                            selected
-                            {% endif %}>
-
-                            Adamic-Adar
-
-                        </option>
-
                     </select>
-
                 </div>
 
-
                 <div>
-
                     <label>Recommendations</label>
-
                     <input
                         type="number"
                         name="recommendations"
@@ -388,145 +299,71 @@
                         max="10"
                         value="{{ recommendation_count }}"
                     >
-
                 </div>
 
-
                 <div>
-
                     <button type="submit">
-                        🔍 Predict Connections
+                        Predict Connections
                     </button>
-
                 </div>
 
-
                 <div>
-
                     <button
                         type="button"
                         class="reset"
                         onclick="window.location.href='/'">
-
-                        ↻ Reset
-
+                        Reset
                     </button>
-
                 </div>
 
             </div>
-
         </form>
 
-
         <div class="algorithm-info">
-
-            {% if algorithm == "Common Neighbors" %}
-
-            <b>Common Neighbors:</b>
-            Counts the number of common friends between
-            two users.
-
-            {% elif algorithm == "Jaccard Similarity" %}
-
-            <b>Jaccard Similarity:</b>
-            Measures similarity using the ratio of common
-            friends to total unique friends.
-
-            {% else %}
-
-            <b>Adamic-Adar:</b>
-            Gives more importance to uncommon shared
-            connections.
-
-            {% endif %}
-
+            <b>K-Nearest Neighbors (KNN):</b>
+            A supervised machine learning algorithm that compares a
+            candidate user pair with nearby training examples using
+            graph-based numerical features.
         </div>
-
     </div>
 
-
-    <!-- Statistics -->
-
     <div class="card">
-
         <h2>Network Statistics</h2>
 
         <div class="stats">
 
             <div class="stat">
-
-                <div class="stat-number">
-                    {{ users|length }}
-                </div>
-
-                <div class="stat-title">
-                    Total Users
-                </div>
-
+                <div class="stat-number">{{ users|length }}</div>
+                <div class="stat-title">Total Users</div>
             </div>
 
-
             <div class="stat">
-
-                <div class="stat-number">
-                    {{ edges|length }}
-                </div>
-
-                <div class="stat-title">
-                    Connections
-                </div>
-
+                <div class="stat-number">{{ edges|length }}</div>
+                <div class="stat-title">Connections</div>
             </div>
 
-
             <div class="stat">
-
                 <div class="stat-number">
                     {{ (users|length * (users|length - 1) / 2)|int }}
                 </div>
-
-                <div class="stat-title">
-                    Possible Links
-                </div>
-
+                <div class="stat-title">Possible Links</div>
             </div>
 
-
             <div class="stat">
-
-                <div class="stat-number"
-                     style="font-size:18px;">
-
-                    {{ algorithm }}
-
-                </div>
-
-                <div class="stat-title">
-                    Algorithm
-                </div>
-
+                <div class="stat-number">KNN</div>
+                <div class="stat-title">Algorithm</div>
             </div>
 
         </div>
-
     </div>
 
-
-    <!-- Graph -->
-
     <div class="card">
-
         <h2>Social Network Graph</h2>
 
         <div class="graph-container">
-
             <svg viewBox="0 0 800 430">
 
-                <!-- Original Connections -->
-
                 {% for edge in edges %}
-
                     {% set p1 = positions[edge[0]] %}
                     {% set p2 = positions[edge[1]] %}
 
@@ -537,20 +374,12 @@
                         y2="{{ p2[1] }}"
                         class="edge">
                     </line>
-
                 {% endfor %}
 
-
-                <!-- Predicted Connections -->
-
                 {% if predicted %}
-
                     {% for prediction in predictions %}
-
                         {% set p1 = positions[selected_user] %}
                         {% set p2 = positions[prediction.user] %}
-
-                        {% if prediction.score > 0 %}
 
                         <line
                             x1="{{ p1[0] }}"
@@ -559,37 +388,24 @@
                             y2="{{ p2[1] }}"
                             class="predicted-edge">
                         </line>
-
-                        {% endif %}
-
                     {% endfor %}
-
                 {% endif %}
 
-
-                <!-- Nodes -->
-
                 {% for user in users %}
-
                     {% set p = positions[user] %}
 
                     <circle
                         cx="{{ p[0] }}"
                         cy="{{ p[1] }}"
                         r="25"
-                        class="node
-                        {% if user == selected_user and predicted %}
-                        selected-node
-                        {% endif %}">
+                        class="node {% if user == selected_user and predicted %}selected-node{% endif %}">
                     </circle>
 
                     <text
                         x="{{ p[0] }}"
                         y="{{ p[1] }}"
                         class="node-label">
-
-                        {{ user[:1] }}
-
+                        {{ user[0] }}
                     </text>
 
                     <text
@@ -598,40 +414,25 @@
                         text-anchor="middle"
                         font-size="12"
                         font-weight="bold">
-
                         {{ user }}
-
                     </text>
-
                 {% endfor %}
 
             </svg>
-
         </div>
 
         <p style="text-align:center;">
-
-            <span class="badge">
-                Blue = Existing User
-            </span>
+            <span class="badge">Blue = Existing User</span>
 
             {% if predicted %}
-
             <span class="badge">
-                Green Dashed = Predicted Connection
+                Green Dashed = KNN Predicted Connection
             </span>
-
             {% endif %}
-
         </p>
-
     </div>
 
-
-    <!-- Results -->
-
     <div class="card">
-
         <h2>Prediction Results</h2>
 
         {% if predicted %}
@@ -639,199 +440,127 @@
             {% if predictions %}
 
             <table class="results">
-
                 <thead>
-
                     <tr>
-
                         <th>Rank</th>
                         <th>Recommended User</th>
-                        <th>Score</th>
+                        <th>KNN Link Probability</th>
                         <th>Common Neighbors</th>
-
                     </tr>
-
                 </thead>
 
-
                 <tbody>
-
-                {% for prediction in predictions %}
-
+                    {% for prediction in predictions %}
                     <tr>
-
-                        <td>
-                            {{ loop.index }}
-                        </td>
+                        <td>{{ loop.index }}</td>
 
                         <td>
                             <b>{{ prediction.user }}</b>
                         </td>
 
                         <td class="score">
-
-                            {% if algorithm == "Common Neighbors" %}
-
-                                {{ "%.0f"|format(prediction.score) }}
-
-                            {% else %}
-
-                                {{ "%.4f"|format(prediction.score) }}
-
-                            {% endif %}
-
+                            {{ "%.4f"|format(prediction.score) }}
                         </td>
 
                         <td>
-
                             {% if prediction.common %}
-
                                 {{ prediction.common|join(", ") }}
-
                             {% else %}
-
                                 None
-
                             {% endif %}
-
                         </td>
-
                     </tr>
-
-                {% endfor %}
-
+                    {% endfor %}
                 </tbody>
-
             </table>
 
             {% else %}
-
                 <div class="empty">
-
                     No possible connections found.
-
                 </div>
-
             {% endif %}
 
         {% else %}
-
             <div class="empty">
-
-                Select a user and algorithm, then click
+                Select a user and click
                 <b>Predict Connections</b>.
-
             </div>
-
         {% endif %}
-
     </div>
 
-
-    <!-- Algorithm Information -->
-
     <div class="card">
-
-        <h2>Algorithms Used</h2>
+        <h2>K-Nearest Neighbors (KNN)</h2>
 
         <p>
-            <b>1. Common Neighbors:</b>
-            Counts common friends between two users.
+            <b>What is KNN?</b><br>
+            K-Nearest Neighbors is a supervised machine learning
+            algorithm that predicts a new data point by comparing it
+            with nearby training examples.
         </p>
 
         <p>
-            <b>2. Jaccard Similarity:</b>
-            Calculates the ratio of common neighbors
-            to the union of their neighbors.
+            <b>Features used:</b><br>
+            User degree, common neighbors, neighborhood union size,
+            Jaccard similarity, and degree product.
         </p>
 
         <p>
-            <b>3. Adamic-Adar:</b>
-            Gives higher importance to shared neighbors
-            with lower network degree.
+            <b>How it works here:</b><br>
+            Existing connections are treated as positive examples
+            and non-existing connections as negative examples.
+            KNN estimates the link probability for candidate pairs,
+            and the candidates are ranked from highest to lowest.
         </p>
-
     </div>
 
-
-    <!-- Workflow -->
-
     <div class="card">
-
         <h2>Implementation Workflow</h2>
 
         <div class="workflow">
-
             <div class="step">Social Network</div>
-
             <div class="arrow">→</div>
-
             <div class="step">Select User</div>
-
             <div class="arrow">→</div>
-
-            <div class="step">Choose Algorithm</div>
-
+            <div class="step">Feature Extraction</div>
             <div class="arrow">→</div>
-
-            <div class="step">Calculate Score</div>
-
+            <div class="step">KNN Model</div>
             <div class="arrow">→</div>
-
-            <div class="step">Rank Users</div>
-
+            <div class="step">Link Probability</div>
             <div class="arrow">→</div>
-
+            <div class="step">Ranking</div>
+            <div class="arrow">→</div>
             <div class="step">Prediction</div>
-
         </div>
-
     </div>
 
-
-    <!-- Viva -->
-
     <div class="card">
-
         <h2>Viva Explanation</h2>
 
         <p>
             <b>What is Link Prediction?</b><br>
-
-            Link prediction is a graph-based technique used
-            to predict possible future relationships between
-            currently unconnected users.
+            Link prediction is a graph-based technique used to predict
+            possible future relationships between currently unconnected users.
         </p>
 
         <p>
-            <b>Why is it useful?</b><br>
-
-            It can be used for friend recommendations,
-            social network analysis and recommendation systems.
+            <b>Why is KNN used?</b><br>
+            KNN compares candidate user pairs with previously observed
+            connected and unconnected pairs using numerical features.
         </p>
 
         <p>
-            <b>What does this project do?</b><br>
-
-            The project calculates similarity scores between
-            users and recommends users who may form future
-            connections.
+            <b>What is the output?</b><br>
+            The system displays a ranked list of potential connections
+            with their KNN link probabilities.
         </p>
-
     </div>
 
-
 </div>
-
 
 <div class="footer">
-
     Link Prediction in Social Networks |
-    Flask Web Application
-
+    Flask Web Application | K-Nearest Neighbors (KNN)
 </div>
 
-
 </body>
-
 </html>
