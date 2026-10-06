@@ -1,7 +1,12 @@
 from flask import Flask, render_template, request
-import math
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
 
 app = Flask(__name__)
+
+# =========================================================
+# SOCIAL NETWORK DATA
+# =========================================================
 
 users = [
     "Aarav", "Diya", "Kabir", "Meera",
@@ -48,22 +53,26 @@ positions = {
 }
 
 
+# =========================================================
+# GRAPH FUNCTIONS
+# =========================================================
+
 def neighbors(user):
     result = set()
 
-    for a, b in edges:
-        if a == user:
-            result.add(b)
-        elif b == user:
-            result.add(a)
+    for user1, user2 in edges:
+        if user1 == user:
+            result.add(user2)
+        elif user2 == user:
+            result.add(user1)
 
     return result
 
 
 def connected(user1, user2):
     return (
-        (user1, user2) in edges or
-        (user2, user1) in edges
+        (user1, user2) in edges
+        or (user2, user1) in edges
     )
 
 
@@ -71,95 +80,148 @@ def common_neighbors(user1, user2):
     return neighbors(user1).intersection(neighbors(user2))
 
 
-def common_neighbors_score(user1, user2):
-    return len(common_neighbors(user1, user2))
+# =========================================================
+# KNN FEATURES
+# =========================================================
 
+def pair_features(user1, user2):
+    """
+    Numerical features used by KNN:
+    degree of user 1,
+    degree of user 2,
+    common neighbors,
+    neighborhood union,
+    Jaccard similarity,
+    degree product.
+    """
 
-def jaccard_score(user1, user2):
     n1 = neighbors(user1)
     n2 = neighbors(user2)
 
+    common = n1.intersection(n2)
     union = n1.union(n2)
 
-    if len(union) == 0:
-        return 0
+    degree_1 = len(n1)
+    degree_2 = len(n2)
+    common_count = len(common)
+    union_count = len(union)
 
-    return len(n1.intersection(n2)) / len(union)
+    jaccard = (
+        common_count / union_count
+        if union_count else 0.0
+    )
 
+    degree_product = degree_1 * degree_2
 
-def adamic_adar_score(user1, user2):
-    common = common_neighbors(user1, user2)
-
-    score = 0
-
-    for person in common:
-        degree = len(neighbors(person))
-
-        if degree > 1:
-            score += 1 / math.log(degree)
-
-    return score
-
-
-def calculate_score(user1, user2, algorithm):
-
-    if algorithm == "Common Neighbors":
-        return common_neighbors_score(user1, user2)
-
-    elif algorithm == "Jaccard Similarity":
-        return jaccard_score(user1, user2)
-
-    elif algorithm == "Adamic-Adar":
-        return adamic_adar_score(user1, user2)
-
-    return 0
+    return [
+        degree_1,
+        degree_2,
+        common_count,
+        union_count,
+        jaccard,
+        degree_product
+    ]
 
 
-def generate_predictions(selected_user, algorithm, recommendation_count):
+# =========================================================
+# KNN MODEL
+# =========================================================
 
-    results = []
+def build_knn_model(selected_user):
+    """
+    Train KNN on all user pairs that do not contain
+    the selected user. Existing links are class 1 and
+    non-existing links are class 0.
+    """
+
+    X = []
+    y = []
+
+    for i in range(len(users)):
+        for j in range(i + 1, len(users)):
+            user1 = users[i]
+            user2 = users[j]
+
+            if user1 == selected_user or user2 == selected_user:
+                continue
+
+            X.append(pair_features(user1, user2))
+            y.append(1 if connected(user1, user2) else 0)
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    knn = KNeighborsClassifier(
+        n_neighbors=5,
+        weights="distance"
+    )
+
+    knn.fit(X_scaled, y)
+
+    return knn, scaler
+
+
+def generate_predictions(selected_user, recommendation_count):
+    knn, scaler = build_knn_model(selected_user)
+
+    candidates = []
+    candidate_features = []
 
     for user in users:
-
         if user == selected_user:
             continue
 
         if connected(selected_user, user):
             continue
 
-        score = calculate_score(
-            selected_user,
-            user,
-            algorithm
+        candidates.append(user)
+        candidate_features.append(
+            pair_features(selected_user, user)
         )
 
+    if not candidates:
+        return []
+
+    candidate_scaled = scaler.transform(candidate_features)
+    probabilities = knn.predict_proba(candidate_scaled)
+
+    class_one_index = list(knn.classes_).index(1)
+
+    results = []
+
+    for user, probability in zip(
+        candidates,
+        probabilities[:, class_one_index]
+    ):
         results.append({
             "user": user,
-            "score": score,
-            "common": list(
+            "score": float(probability),
+            "common": sorted(
                 common_neighbors(selected_user, user)
             )
         })
 
     results.sort(
-        key=lambda x: x["score"],
+        key=lambda item: item["score"],
         reverse=True
     )
 
     return results[:recommendation_count]
 
 
+# =========================================================
+# ROUTES
+# =========================================================
+
 @app.route("/")
 def home():
-
     return render_template(
         "index.html",
         users=users,
         edges=edges,
         positions=positions,
         predictions=[],
-        selected_user="",
-        algorithm="Common Neighbors",
+        selected_user="Aarav",
         recommendation_count=5,
         predicted=False
     )
@@ -167,23 +229,11 @@ def home():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-
-    selected_user = request.form.get(
-        "user",
-        "Aarav"
-    )
-
-    algorithm = request.form.get(
-        "algorithm",
-        "Common Neighbors"
-    )
+    selected_user = request.form.get("user", "Aarav")
 
     try:
         recommendation_count = int(
-            request.form.get(
-                "recommendations",
-                5
-            )
+            request.form.get("recommendations", 5)
         )
     except ValueError:
         recommendation_count = 5
@@ -195,7 +245,6 @@ def predict():
 
     predictions = generate_predictions(
         selected_user,
-        algorithm,
         recommendation_count
     )
 
@@ -206,7 +255,6 @@ def predict():
         positions=positions,
         predictions=predictions,
         selected_user=selected_user,
-        algorithm=algorithm,
         recommendation_count=recommendation_count,
         predicted=True
     )
